@@ -58,9 +58,7 @@ def go():
 
         for i in newList:
             final = final.replace(i, '/'+i)
-        final = final.replace('"////', '"/')
-        final = final.replace('"///', '"/')
-        final = final.replace('"//', '"/')
+     
         s = final.encode('utf-8', 'ignore')
         with open(path, 'wb') as f:
             f.write(s)
