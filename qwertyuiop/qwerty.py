@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, jsonify
+from bs4 import BeautifulSoup as bs
 from requests import get
 import requests
 import os 
@@ -15,6 +16,8 @@ def home():
 
 @webserver.route('/go', methods=['POST'])
 def go():
+    final = ""
+    newString = ""
     myString = request.form['ecid']
     path = "./templates/result.html"
     
@@ -35,8 +38,32 @@ def go():
         newString = sep.join(newAr)
 
         final = newTxt.replace('"/', '"'+newString+'/')
-        with open(path, 'w', encoding='utf-8') as f:
-            f.write(final)
+
+        soup = bs(final, 'html.parser')
+
+        url = soup.find_all('a')
+        urlList = []
+        for u in url:
+            tmp = u.get('href')
+            urlList.append(tmp)
+
+        emptyList = list(filter(None, urlList))
+        newList = list(set(emptyList))
+
+        while True:
+            try:
+                newList.remove(newString+'/')
+            except ValueError:
+                break
+
+        for i in newList:
+            final = final.replace(i, '/'+i)
+        final = final.replace('"////', '"/')
+        final = final.replace('"///', '"/')
+        final = final.replace('"//', '"/')
+        s = final.encode('utf-8', 'ignore')
+        with open(path, 'wb') as f:
+            f.write(s)
             f.close
         
         return render_template("result.html"), 200
