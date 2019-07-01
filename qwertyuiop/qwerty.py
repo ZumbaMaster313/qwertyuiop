@@ -50,21 +50,41 @@ def go():
 @webserver.route('/go', defaults={'path': ''})
 @webserver.route('/go/<path:path>')
 def proxy(path):
-    r = requests.get(path)
-    txt = r.text
+    try:
+        '''
+        try:
+            pathAr = path.split(sep)
+            goIndex = [i for i, e in enumerate(pathAr) if e == 'go']
+            goInt = goIndex[-1]
+            goInt += 1
+
+            indexList = [i for i in range(goInt)]
+
+            for index in sorted(indexList, reverse=True):
+                del pathAr[index]
+            path = sep.join(pathAr)   
+        except IndexError:
+            pass
+        '''
+        r = requests.get(path)
+        txt = r.text
         
-    newTxt = txt.replace('%','')
+        newTxt = txt.replace('%','')
 
-    ar = path.split(sep, 3)
-    newAr = [ar[0], ar[1], ar[2]]
-    newString = sep.join(newAr)
+        ar = path.split(sep, 3)
+        newAr = [ar[0], ar[1], ar[2]]
+        newString = sep.join(newAr)
 
-    writeHtml(newString, newTxt)
+        writeHtml(newString, newTxt)
 
-    return render_template("result.html"), 200
+        return render_template("result.html"), 200
+    except Exception:
+        return render_template("error.html", error="Sorry, but uhh this server cannot render that...", help="* :( *"), 200
 
 
 def writeHtml(nString, txt):
+    txt = txt.replace('"//', '"https:/')
+    txt = txt.replace("'/", "'"+nString+'/')
     final = txt.replace('"/', '"'+nString+'/')
 
     soup = bs(final, 'html.parser')
@@ -85,15 +105,16 @@ def writeHtml(nString, txt):
             break
 
     for i in newList:
-        final = final.replace(i, 'go/'+i)
+        final = final.replace(i, 'http://localhost:5055/go/'+i)
     
     n = 0
-    replaceString = '"go/'
+    replaceString = '"http://localhost:5055/go/'
     while n <= 100:
-        replaceString += 'go/'
-        final = final.replace(replaceString, '"go/')
+        replaceString += 'http://localhost:5055/go/'
+        final = final.replace(replaceString, '"http://localhost:5055/go/')
         n += 1
     
+    final = final.replace('"http://localhost:5055/go/http://localhost:5055/go/', '"go/')
 
     s = final.encode('utf-8', 'ignore')
     with open(link, 'wb') as f:
