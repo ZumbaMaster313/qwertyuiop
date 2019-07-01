@@ -114,7 +114,7 @@ def writeHtml(nString, txt):
         final = final.replace(replaceString, '"http://localhost:5055/go/')
         n += 1
     
-    final = final.replace('"http://localhost:5055/go/http://localhost:5055/go/', '"go/')
+
 
     s = final.encode('utf-8', 'ignore')
     with open(link, 'wb') as f:
