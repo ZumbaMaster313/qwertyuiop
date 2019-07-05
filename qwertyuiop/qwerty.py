@@ -21,7 +21,7 @@ link = "./templates/result.html"
 def home():
     return render_template("index.html"), 200
 
-@webserver.route('/go', methods=['POST'])
+@webserver.route('/get', methods=['POST'])
 def go():
     myString = request.form['ecid']
 
@@ -47,8 +47,8 @@ def go():
     except Exception:
         return render_template("error.html", error="Hey mate, your supposed to input a url...", help="* https://idiot.com *"), 200
 
-@webserver.route('/go', defaults={'path': ''})
-@webserver.route('/go/<path:path>')
+@webserver.route('/get', defaults={'path': ''})
+@webserver.route('/get/<path:path>')
 def proxy(path):
     try:
         '''
@@ -83,7 +83,7 @@ def proxy(path):
 
 
 def writeHtml(nString, txt):
-    txt = txt.replace('"//', '"https:/')
+    txt = txt.replace('"//', '"https://')
     txt = txt.replace("'/", "'"+nString+'/')
     final = txt.replace('"/', '"'+nString+'/')
 
@@ -105,17 +105,17 @@ def writeHtml(nString, txt):
             break
 
     for i in newList:
-        final = final.replace(i, 'http://localhost:5055/go/'+i)
+        final = final.replace(i, 'http://localhost:5055/get/'+i)
     
     n = 0
-    replaceString = '"http://localhost:5055/go/'
+    replaceString = '"http://localhost:5055/get/'
     while n <= 100:
-        replaceString += 'http://localhost:5055/go/'
-        final = final.replace(replaceString, '"http://localhost:5055/go/')
+        replaceString += 'http://localhost:5055/get/'
+        final = final.replace(replaceString, '"http://localhost:5055/get/')
         n += 1
-        
-    final = final.replace('"http://localhost:5055/go/http://localhost:5055/go/', '"http://localhost:5055/go/')
     
+    final = final.replace('"http://localhost:5055/get/http://localhost:5055/get/', '"http://localhost:5055/get/')
+
     s = final.encode('utf-8', 'ignore')
     with open(link, 'wb') as f:
         f.write(s)
