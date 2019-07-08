@@ -34,7 +34,6 @@ def go():
             errorString = "Your supposed to input a valid url..."
             sHelp = "* couldn't render *"
             return render_template("error.html", error=errorString, help=sHelp), 200
-            
         txt = r.text
         
         newTxt = txt.replace('%','')
@@ -60,7 +59,9 @@ def proxy(path):
             goIndex = [i for i, e in enumerate(pathAr) if e == 'go']
             goInt = goIndex[-1]
             goInt += 1
+
             indexList = [i for i in range(goInt)]
+
             for index in sorted(indexList, reverse=True):
                 del pathAr[index]
             path = sep.join(pathAr)   
