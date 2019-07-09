@@ -107,16 +107,16 @@ def writeHtml(nString, txt):
             break
 
     for i in newList:
-        final = final.replace(i, 'http://localhost:5055/get/'+i)
+        final = final.replace(i, 'mydomain/get/'+i)
     
     n = 0
-    replaceString = '"http://localhost:5055/get/'
+    replaceString = '"mydomain/get/'
     while n <= 100:
-        replaceString += 'http://localhost:5055/get/'
-        final = final.replace(replaceString, '"http://localhost:5055/get/')
+        replaceString += 'mydomain/get/'
+        final = final.replace(replaceString, '"mydomain/get/')
         n += 1
     
-    final = final.replace('"http://localhost:5055/get/http://localhost:5055/get/', '"http://localhost:5055/get/')
+    final = final.replace('"mydomain/get/mydomain/get/', '"mydomain/get/')
 
     s = final.encode('utf-8', 'ignore')
     with open(link, 'wb') as f:
