@@ -53,21 +53,7 @@ def go():
 @webserver.route('/get/<path:path>')
 def proxy(path):
     try:
-        '''
-        try:
-            pathAr = path.split(sep)
-            goIndex = [i for i, e in enumerate(pathAr) if e == 'go']
-            goInt = goIndex[-1]
-            goInt += 1
-
-            indexList = [i for i in range(goInt)]
-
-            for index in sorted(indexList, reverse=True):
-                del pathAr[index]
-            path = sep.join(pathAr)   
-        except IndexError:
-            pass
-        '''
+       
         r = requests.get(path)
         txt = r.text
         
