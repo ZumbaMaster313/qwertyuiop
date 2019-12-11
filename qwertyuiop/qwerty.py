@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-
 from flask import Flask, render_template, request, jsonify
 from bs4 import BeautifulSoup as bs
 from requests import get
@@ -53,7 +51,21 @@ def go():
 @webserver.route('/get/<path:path>')
 def proxy(path):
     try:
-       
+        '''
+        try:
+            pathAr = path.split(sep)
+            goIndex = [i for i, e in enumerate(pathAr) if e == 'go']
+            goInt = goIndex[-1]
+            goInt += 1
+
+            indexList = [i for i in range(goInt)]
+
+            for index in sorted(indexList, reverse=True):
+                del pathAr[index]
+            path = sep.join(pathAr)   
+        except IndexError:
+            pass
+        '''
         r = requests.get(path)
         txt = r.text
         
@@ -69,7 +81,11 @@ def proxy(path):
     except Exception:
         return render_template("error.html", error="Sorry, but uhh this server cannot render that...", help="* :( *"), 200
 
-
+@webserver.route('/css', defaults={'path': ''})
+@webserver.route("/css/<path:path>")
+def getStatics(path):
+    
+    
 def writeHtml(nString, txt):
     txt = txt.replace('"//', '"https://')
     txt = txt.replace("'/", "'"+nString+'/')
@@ -93,16 +109,16 @@ def writeHtml(nString, txt):
             break
 
     for i in newList:
-        final = final.replace(i, 'mydomain/get/'+i)
+        final = final.replace(i, 'http://localhost:5055/get/'+i)
     
     n = 0
-    replaceString = '"mydomain/get/'
+    replaceString = '"http://localhost:5055/get/'
     while n <= 100:
-        replaceString += 'mydomain/get/'
-        final = final.replace(replaceString, '"mydomain/get/')
+        replaceString += 'http://localhost:5055/get/'
+        final = final.replace(replaceString, '"http://localhost:5055/get/')
         n += 1
     
-    final = final.replace('"mydomain/get/mydomain/get/', '"mydomain/get/')
+    final = final.replace('"http://localhost:5055/get/http://localhost:5055/get/', '"http://localhost:5055/get/')
 
     s = final.encode('utf-8', 'ignore')
     with open(link, 'wb') as f:
