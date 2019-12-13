@@ -83,9 +83,26 @@ def proxy(path):
 
 @webserver.route('/css', defaults={'path': ''})
 @webserver.route("/css/<path:path>")
-def getStatics(path):
+def getCSS(path):
     
+
+@webserver.route('/js', defaults={'path': ''})
+@webserver.route("/js/<path:path>")
+def getJS(path): 
     
+
+def links(method, mType, arg, location, soup):
+    List = []
+    link = soup.find_all(method, {mType : arg})
+    for l in link:
+        tmp = l.get(location)
+        List.append(tmp)
+    
+    emptyList = list(filter(None, List))
+    newList = list(set(emptyList))
+    
+    return newList
+
 def writeHtml(nString, txt):
     txt = txt.replace('"//', '"https://')
     txt = txt.replace("'/", "'"+nString+'/')
@@ -93,22 +110,17 @@ def writeHtml(nString, txt):
 
     soup = bs(final, 'html.parser')
 
-    url = soup.find_all('a')
-    urlList = []
-    for u in url:
-        tmp = u.get('href')
-        urlList.append(tmp)
-
-    emptyList = list(filter(None, urlList))
-    newList = list(set(emptyList))
+    urlList = links('a', "rel", "", 'href', soup)
+    jsList = links('script', "type", "text/javascript", 'src', soup)
+    cssList = links('link', "rel", "stylesheet", 'href', soup)
         
     while True:
         try:
-            newList.remove(nString+'/')
+            urlList.remove(nString+'/')
         except ValueError:
             break
 
-    for i in newList:
+    for i in urlList:
         final = final.replace(i, 'http://localhost:5055/get/'+i)
     
     n = 0
