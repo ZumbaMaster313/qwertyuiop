@@ -15,6 +15,7 @@ final = ""
 myString = ""
 newString = ""
 link = "./templates/result.html"
+domain = "http://localhost:5055/"
 
 
 @webserver.route("/")
@@ -51,21 +52,6 @@ def go():
 @webserver.route('/get/<path:path>')
 def proxy(path):
     try:
-        '''
-        try:
-            pathAr = path.split(sep)
-            goIndex = [i for i, e in enumerate(pathAr) if e == 'go']
-            goInt = goIndex[-1]
-            goInt += 1
-
-            indexList = [i for i in range(goInt)]
-
-            for index in sorted(indexList, reverse=True):
-                del pathAr[index]
-            path = sep.join(pathAr)   
-        except IndexError:
-            pass
-        '''
         r = requests.get(path)
         txt = r.text
         
@@ -81,7 +67,7 @@ def proxy(path):
     except Exception:
         return render_template("error.html", error="Sorry, but uhh this server cannot render that...", help="* :( *"), 200
 
-@webserver.route('/css', defaults={'path': ''})
+'''@webserver.route('/css', defaults={'path': ''})
 @webserver.route("/css/<path:path>")
 def getCSS(path):
     
@@ -89,7 +75,7 @@ def getCSS(path):
 @webserver.route('/js', defaults={'path': ''})
 @webserver.route("/js/<path:path>")
 def getJS(path): 
-    
+'''
 
 def links(method, mType, arg, location, soup):
     List = []
@@ -103,6 +89,41 @@ def links(method, mType, arg, location, soup):
     
     return newList
 
+def recycle(path, finalHtml):
+    n = 0
+    parentString = '"' + domain + path + '/'
+    childString = domain + path + '/'
+
+    replaceString = parentString
+    while n <= 100:
+        replaceString += childString
+        finalHtml = finalHtml.replace(replaceString, parentString)
+        n += 1
+    
+    finalHtml = finalHtml.replace(parentString + childString, parentString)
+    return finalHtml
+
+def inputStatics(List, urlPath, html):
+    for l in List:
+        html = html.replace(l, domain + urlPath + '/' + l)
+    
+    html = recycle(urlPath, html)
+
+    return html
+
+def inputURL(html, List, url):
+    while True:
+        try:
+            List.remove(url+'/')
+        except ValueError:
+            break
+
+    for i in List:
+        html = html.replace(i, 'http://localhost:5055/get/'+i)
+    
+    html = recycle("get", html)
+    return html
+
 def writeHtml(nString, txt):
     txt = txt.replace('"//', '"https://')
     txt = txt.replace("'/", "'"+nString+'/')
@@ -111,26 +132,10 @@ def writeHtml(nString, txt):
     soup = bs(final, 'html.parser')
 
     urlList = links('a', "rel", "", 'href', soup)
-    jsList = links('script', "type", "text/javascript", 'src', soup)
-    cssList = links('link', "rel", "stylesheet", 'href', soup)
-        
-    while True:
-        try:
-            urlList.remove(nString+'/')
-        except ValueError:
-            break
+    #jsList = links('script', "type", "text/javascript", 'src', soup)
+    #cssList = links('link', "rel", "stylesheet", 'href', soup)
 
-    for i in urlList:
-        final = final.replace(i, 'http://localhost:5055/get/'+i)
-    
-    n = 0
-    replaceString = '"http://localhost:5055/get/'
-    while n <= 100:
-        replaceString += 'http://localhost:5055/get/'
-        final = final.replace(replaceString, '"http://localhost:5055/get/')
-        n += 1
-    
-    final = final.replace('"http://localhost:5055/get/http://localhost:5055/get/', '"http://localhost:5055/get/')
+    final = inputURL(final, urlList, nString)
 
     s = final.encode('utf-8', 'ignore')
     with open(link, 'wb') as f:
