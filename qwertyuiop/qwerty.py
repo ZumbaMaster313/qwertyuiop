@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, jsonify
+from html5print import CSSBeautifier
 from bs4 import BeautifulSoup as bs
 from requests import get
 import requests
@@ -15,7 +16,17 @@ final = ""
 myString = ""
 newString = ""
 link = "./templates/result.html"
+test = "./templates/test.html"
 domain = "http://localhost:5055/"
+html = """
+<html>
+<head>
+<title>Test Page</title>
+</head>
+<body>
+<div>test</div>
+</html>
+"""
 
 
 @webserver.route("/")
@@ -70,7 +81,18 @@ def proxy(path):
 @webserver.route('/css', defaults={'path': ''})
 @webserver.route("/css/<path:path>")
 def getCSS(path):
-    return render_template("error.html", error=path, help="lololol"), 200
+
+    r = requests.get(path)
+    txt = r.text
+
+    final = CSSBeautifier.beautify(txt, 4)
+
+    s = final.encode('utf-8', 'ignore')
+    with open(test, 'wb') as f:
+        f.write(s)
+        f.close
+
+    return render_template("test.html"), 200
 
 @webserver.route('/js', defaults={'path': ''})
 @webserver.route("/js/<path:path>")
