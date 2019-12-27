@@ -67,15 +67,15 @@ def proxy(path):
     except Exception:
         return render_template("error.html", error="Sorry, but uhh this server cannot render that...", help="* :( *"), 200
 
-'''@webserver.route('/css', defaults={'path': ''})
+@webserver.route('/css', defaults={'path': ''})
 @webserver.route("/css/<path:path>")
 def getCSS(path):
-    
+    return render_template("error.html", error=path, help="lololol"), 200
 
 @webserver.route('/js', defaults={'path': ''})
 @webserver.route("/js/<path:path>")
 def getJS(path): 
-'''
+     return render_template("error.html", error=path, help="lololol"), 200
 
 def links(method, mType, arg, location, soup):
     List = []
@@ -127,17 +127,19 @@ def inputURL(html, List, url):
 def writeHtml(nString, txt):
     txt = txt.replace('"//', '"https://')
     txt = txt.replace("'/", "'"+nString+'/')
-    final = txt.replace('"/', '"'+nString+'/')
+    html = txt.replace('"/', '"'+nString+'/')
 
-    soup = bs(final, 'html.parser')
+    soup = bs(html, 'html.parser')
 
     urlList = links('a', "rel", "", 'href', soup)
-    #jsList = links('script', "type", "text/javascript", 'src', soup)
-    #cssList = links('link', "rel", "stylesheet", 'href', soup)
+    jsList = links('script', "", "", 'src', soup)
+    cssList = links('link', "rel", "stylesheet", 'href', soup)
 
-    final = inputURL(final, urlList, nString)
+    html = inputURL(html, urlList, nString)
+    inputHtml = inputStatics(jsList, "js", html)
+    finalHtml = inputStatics(cssList, "css", inputHtml)
 
-    s = final.encode('utf-8', 'ignore')
+    s = finalHtml.encode('utf-8', 'ignore')
     with open(link, 'wb') as f:
         f.write(s)
         f.close
