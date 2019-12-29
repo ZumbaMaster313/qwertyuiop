@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, jsonify
-from html5print import CSSBeautifier
+from html5print import CSSBeautifier, HTMLBeautifier, JSBeautifier
 from bs4 import BeautifulSoup as bs
 from requests import get
 import requests
@@ -18,15 +18,7 @@ newString = ""
 link = "./templates/result.html"
 test = "./templates/test.html"
 domain = "http://localhost:5055/"
-html = """
-<html>
-<head>
-<title>Test Page</title>
-</head>
-<body>
-<div>test</div>
-</html>
-"""
+websiteHTML = ""
 
 
 @webserver.route("/")
@@ -45,7 +37,7 @@ def go():
             sHelp = "* couldn't render *"
             return render_template("error.html", error=errorString, help=sHelp), 200
         txt = r.text
-        
+
         newTxt = txt.replace('%','')
 
         ar = myString.split(sep, 3)
@@ -81,23 +73,67 @@ def proxy(path):
 @webserver.route('/css', defaults={'path': ''})
 @webserver.route("/css/<path:path>")
 def getCSS(path):
+    global websiteHTML
 
     r = requests.get(path)
     txt = r.text
 
+    styleTag = """
+    <style>
+    </style>
+    """
+
     final = CSSBeautifier.beautify(txt, 4)
 
-    s = final.encode('utf-8', 'ignore')
-    with open(test, 'wb') as f:
+    css = bs(styleTag, 'html.parser')
+    style = css.find('style')
+    style.insert(1, final)
+
+    soup = bs(websiteHTML, 'html.parser')
+    
+    head = soup.find('head')
+    head.insert(1, css)
+
+    websiteHTML = soup
+
+    s = websiteHTML.encode('utf-8', 'ignore')
+    with open(link, 'wb') as f:
         f.write(s)
         f.close
-
-    return render_template("test.html"), 200
+    return render_template("result.html"), 200
 
 @webserver.route('/js', defaults={'path': ''})
 @webserver.route("/js/<path:path>")
 def getJS(path): 
-     return render_template("error.html", error=path, help="lololol"), 200
+    global websiteHTML
+
+    r = requests.get(path)
+    txt = r.text
+
+    scriptTag = """
+    <script>
+    </script>
+    """
+
+    final = JSBeautifier.beautify(txt, 4)
+
+    js = bs(scriptTag, 'html.parser')
+    script = js.find('script')
+    script.insert(1, final)
+
+    soup = bs(websiteHTML, 'html.parser')
+    
+    head = soup.find('head')
+    head.insert(1, js)
+
+    websiteHTML = soup
+
+    s = websiteHTML.encode('utf-8', 'ignore')
+    with open(link, 'wb') as f:
+        f.write(s)
+        f.close
+
+    return render_template("result.html"), 200
 
 def links(method, mType, arg, location, soup):
     List = []
@@ -147,6 +183,8 @@ def inputURL(html, List, url):
     return html
 
 def writeHtml(nString, txt):
+    global websiteHTML
+
     txt = txt.replace('"//', '"https://')
     txt = txt.replace("'/", "'"+nString+'/')
     html = txt.replace('"/', '"'+nString+'/')
@@ -160,6 +198,8 @@ def writeHtml(nString, txt):
     html = inputURL(html, urlList, nString)
     inputHtml = inputStatics(jsList, "js", html)
     finalHtml = inputStatics(cssList, "css", inputHtml)
+
+    websiteHTML = finalHtml
 
     s = finalHtml.encode('utf-8', 'ignore')
     with open(link, 'wb') as f:
