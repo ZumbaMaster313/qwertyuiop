@@ -3,6 +3,7 @@ from html5print import CSSBeautifier, HTMLBeautifier, JSBeautifier
 from bs4 import BeautifulSoup as bs
 from requests import get
 import requests
+import errno
 import os 
 import webbrowser
 import shutil
@@ -19,6 +20,7 @@ link = "./templates/result.html"
 test = "./templates/test.html"
 domain = "http://localhost:5055/"
 websiteHTML = ""
+increment = 0
 
 
 @webserver.route("/")
@@ -27,6 +29,9 @@ def home():
 
 @webserver.route('/get', methods=['POST'])
 def go():
+    global increment
+    increment = 0
+
     myString = request.form['ecid']
 
     try:
@@ -54,6 +59,8 @@ def go():
 @webserver.route('/get', defaults={'path': ''})
 @webserver.route('/get/<path:path>')
 def proxy(path):
+    global increment 
+    increment = 0
     try:
         r = requests.get(path)
         txt = r.text
@@ -78,28 +85,22 @@ def getCSS(path):
     r = requests.get(path)
     txt = r.text
 
-    styleTag = """
-    <style>
-    </style>
-    """
-
     final = CSSBeautifier.beautify(txt, 4)
 
-    css = bs(styleTag, 'html.parser')
-    style = css.find('style')
-    style.insert(1, final)
+    pathAr = path.split("/")
+    cssName = pathAr[-1] 
 
-    soup = bs(websiteHTML, 'html.parser')
+    if ".css" not in cssName:
+        cssName = cssName + ".css"
     
-    head = soup.find('head')
-    head.insert(1, css)
+    cssPath = "./static/stylesheets/" + cssName
 
-    websiteHTML = soup
-
-    s = websiteHTML.encode('utf-8', 'ignore')
-    with open(link, 'wb') as f:
+    open(cssPath, 'a').close
+    s = final.encode('utf-8', 'ignore')
+    with open(cssPath, 'wb') as f:
         f.write(s)
         f.close
+    
     return render_template("result.html"), 200
 
 @webserver.route('/js', defaults={'path': ''})
@@ -184,6 +185,13 @@ def inputURL(html, List, url):
 
 def writeHtml(nString, txt):
     global websiteHTML
+    
+    try:
+        filelist = [ f for f in os.listdir("./static/stylesheet/") if f.endswith(".css") ]
+        for f in filelist:
+            os.remove(os.path.join("./static/stylesheet/", f))
+    except ValueError:
+        pass
 
     txt = txt.replace('"//', '"https://')
     txt = txt.replace("'/", "'"+nString+'/')
