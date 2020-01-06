@@ -9,6 +9,7 @@ import webbrowser
 import shutil
 import json 
 import urllib3
+import glob
 
 webserver = Flask(__name__)
 
@@ -94,18 +95,25 @@ def getCSS(path):
         cssName = cssName + ".css"
     
     cssPath = "./static/stylesheets/" + cssName
-
     open(cssPath, 'a').close
     s = final.encode('utf-8', 'ignore')
     with open(cssPath, 'wb') as f:
         f.write(s)
         f.close
+
+    websiteHTML = websiteHTML.replace(domain + "css/" + path, "." + cssPath)
     
+    writehtml = websiteHTML.encode('utf-8', 'ignore')
+    with open(link, 'wb') as f:
+        f.write(writehtml)
+        f.close
+
     return render_template("result.html"), 200
 
 @webserver.route('/js', defaults={'path': ''})
 @webserver.route("/js/<path:path>")
 def getJS(path): 
+    '''
     global websiteHTML
 
     r = requests.get(path)
@@ -133,6 +141,7 @@ def getJS(path):
     with open(link, 'wb') as f:
         f.write(s)
         f.close
+    '''
 
     return render_template("result.html"), 200
 
@@ -183,15 +192,18 @@ def inputURL(html, List, url):
     html = recycle("get", html)
     return html
 
+def deleteFiles(folderPath):
+    for f in os.listdir(folderPath):
+        filePath = os.path.join(folderPath, f)
+        try:
+            os.remove(filePath)
+        except:
+            pass
+            
 def writeHtml(nString, txt):
     global websiteHTML
     
-    try:
-        filelist = [ f for f in os.listdir("./static/stylesheet/") if f.endswith(".css") ]
-        for f in filelist:
-            os.remove(os.path.join("./static/stylesheet/", f))
-    except ValueError:
-        pass
+    deleteFiles('./static/stylesheets/')
 
     txt = txt.replace('"//', '"https://')
     txt = txt.replace("'/", "'"+nString+'/')
