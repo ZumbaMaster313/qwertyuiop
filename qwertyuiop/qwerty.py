@@ -6,6 +6,7 @@ import requests
 import errno
 import os 
 import webbrowser
+import time
 import shutil
 import json 
 import urllib3
@@ -20,9 +21,6 @@ newString = ""
 link = "./templates/result.html"
 test = "./templates/test.html"
 domain = "http://localhost:5055/"
-websiteHTML = ""
-increment = 0
-
 
 @webserver.route("/")
 def home():
@@ -30,8 +28,6 @@ def home():
 
 @webserver.route('/get', methods=['POST'])
 def go():
-    global increment
-    increment = 0
 
     myString = request.form['ecid']
 
@@ -60,8 +56,6 @@ def go():
 @webserver.route('/get', defaults={'path': ''})
 @webserver.route('/get/<path:path>')
 def proxy(path):
-    global increment 
-    increment = 0
     try:
         r = requests.get(path)
         txt = r.text
@@ -77,73 +71,6 @@ def proxy(path):
         return render_template("result.html"), 200
     except Exception:
         return render_template("error.html", error="Sorry, but uhh this server cannot render that...", help="* :( *"), 200
-
-@webserver.route('/css', defaults={'path': ''})
-@webserver.route("/css/<path:path>")
-def getCSS(path):
-    global websiteHTML
-
-    r = requests.get(path)
-    txt = r.text
-
-    final = CSSBeautifier.beautify(txt, 4)
-
-    pathAr = path.split("/")
-    cssName = pathAr[-1] 
-
-    if ".css" not in cssName:
-        cssName = cssName + ".css"
-    
-    cssPath = "./static/stylesheets/" + cssName
-    open(cssPath, 'a').close
-    s = final.encode('utf-8', 'ignore')
-    with open(cssPath, 'wb') as f:
-        f.write(s)
-        f.close
-
-    websiteHTML = websiteHTML.replace(domain + "css/" + path, "." + cssPath)
-    
-    writehtml = websiteHTML.encode('utf-8', 'ignore')
-    with open(link, 'wb') as f:
-        f.write(writehtml)
-        f.close
-
-    return render_template("result.html"), 200
-
-@webserver.route('/js', defaults={'path': ''})
-@webserver.route("/js/<path:path>")
-def getJS(path): 
-    '''
-    global websiteHTML
-
-    r = requests.get(path)
-    txt = r.text
-
-    scriptTag = """
-    <script>
-    </script>
-    """
-
-    final = JSBeautifier.beautify(txt, 4)
-
-    js = bs(scriptTag, 'html.parser')
-    script = js.find('script')
-    script.insert(1, final)
-
-    soup = bs(websiteHTML, 'html.parser')
-    
-    head = soup.find('head')
-    head.insert(1, js)
-
-    websiteHTML = soup
-
-    s = websiteHTML.encode('utf-8', 'ignore')
-    with open(link, 'wb') as f:
-        f.write(s)
-        f.close
-    '''
-
-    return render_template("result.html"), 200
 
 def links(method, mType, arg, location, soup):
     List = []
@@ -171,11 +98,76 @@ def recycle(path, finalHtml):
     finalHtml = finalHtml.replace(parentString + childString, parentString)
     return finalHtml
 
-def inputStatics(List, urlPath, html):
+def inputCSS(List, urlPath, html):
     for l in List:
-        html = html.replace(l, domain + urlPath + '/' + l)
+        r = requests.get(l)
+        txt = r.text
+
+        try:
+            final = CSSBeautifier.beautify(txt, 4)
+        except:
+            final = txt
+
+        pathAr = l.split("/")
+        cssName = pathAr[-1] 
+
+        sep = '.css'
+        if ".css" not in cssName:
+            cssFinal = cssName + ".css"
+        else: 
+            temp = cssName.split(sep, 1)[0]
+            cssFinal = temp + ".css"
     
-    html = recycle(urlPath, html)
+        cssPath = "./static/stylesheets/" + cssFinal
+        open(cssPath, 'a').close
+        s = final.encode('utf-8', 'ignore')
+        with open(cssPath, 'wb') as f:
+            f.write(s)
+            f.close
+
+        html = html.replace(l, "." + cssPath)
+    
+        writehtml = html.encode('utf-8', 'ignore')
+        with open(link, 'wb') as f:
+                f.write(writehtml)
+                f.close
+
+    return html
+
+def inputJS(List, urlPath, html):
+
+    for l in List:
+        r = requests.get(l)
+        txt = r.text
+
+        try:
+            final = JSBeautifier.beautify(txt, 4)
+        except:
+            final = txt
+
+        pathAr = l.split("/")
+        jsName = pathAr[-1] 
+
+        sep = '.js'
+        if ".js" not in jsName:
+            jsFinal = jsName + ".js"
+        else: 
+            temp = jsName.split(sep, 1)[0]
+            jsFinal = temp + ".js"
+    
+        jsPath = "./javascript/" + jsFinal
+        open(jsPath, 'a').close
+        s = final.encode('utf-8', 'ignore')
+        with open(jsPath, 'wb') as f:
+            f.write(s)
+            f.close
+
+        html = html.replace(l, "." + jsPath)
+    
+        writehtml = html.encode('utf-8', 'ignore')
+        with open(link, 'wb') as f:
+            f.write(writehtml)
+            f.close
 
     return html
 
@@ -201,9 +193,9 @@ def deleteFiles(folderPath):
             pass
             
 def writeHtml(nString, txt):
-    global websiteHTML
     
     deleteFiles('./static/stylesheets/')
+    deleteFiles('./javascript')
 
     txt = txt.replace('"//', '"https://')
     txt = txt.replace("'/", "'"+nString+'/')
@@ -216,10 +208,8 @@ def writeHtml(nString, txt):
     cssList = links('link', "rel", "stylesheet", 'href', soup)
 
     html = inputURL(html, urlList, nString)
-    inputHtml = inputStatics(jsList, "js", html)
-    finalHtml = inputStatics(cssList, "css", inputHtml)
-
-    websiteHTML = finalHtml
+    inputHtml = inputJS(jsList, "js", html)
+    finalHtml = inputCSS(cssList, "css", inputHtml)
 
     s = finalHtml.encode('utf-8', 'ignore')
     with open(link, 'wb') as f:
