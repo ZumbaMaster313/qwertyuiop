@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup as bs
 from requests import get
 import requests
 import errno
+import jsbeautifier
 import os 
 import webbrowser
 import time
@@ -15,7 +16,6 @@ import glob
 webserver = Flask(__name__)
 
 sep = '/'
-final = ""
 myString = ""
 newString = ""
 link = "./templates/result.html"
@@ -27,7 +27,7 @@ def home():
     return render_template("index.html"), 200
 
 @webserver.route('/get', methods=['POST'])
-def go():
+def go(path):
 
     myString = request.form['ecid']
 
@@ -53,8 +53,8 @@ def go():
     except Exception:
         return render_template("error.html", error="Hey mate, your supposed to input a url...", help="* https://idiot.com *"), 200
 
-@webserver.route('/get', defaults={'path': ''})
-@webserver.route('/get/<path:path>')
+@webserver.route('/route', defaults={'path': ''})
+@webserver.route('/route/<path:path>')
 def proxy(path):
     try:
         r = requests.get(path)
@@ -99,76 +99,77 @@ def recycle(path, finalHtml):
     return finalHtml
 
 def inputCSS(List, urlPath, html):
-    for l in List:
-        r = requests.get(l)
-        txt = r.text
+    try:
+        for l in List:
+            r = requests.get(l)
+            txt = r.text
 
-        try:
-            final = CSSBeautifier.beautify(txt, 4)
-        except:
-            final = txt
+            try:
+                final = CSSBeautifier.beautify(txt, 4)
+            except:
+                final = txt
 
-        pathAr = l.split("/")
-        cssName = pathAr[-1] 
+            pathAr = l.split("/")
+            cssName = pathAr[-1] 
 
-        sep = '.css'
-        if ".css" not in cssName:
-            cssFinal = cssName + ".css"
-        else: 
-            temp = cssName.split(sep, 1)[0]
-            cssFinal = temp + ".css"
+            sep = '.css'
+            if ".css" not in cssName:
+                cssFinal = cssName + ".css"
+            else: 
+                temp = cssName.split(sep, 1)[0]
+                cssFinal = temp + ".css"
     
-        cssPath = "./static/stylesheets/" + cssFinal
-        open(cssPath, 'a').close
-        s = final.encode('utf-8', 'ignore')
-        with open(cssPath, 'wb') as f:
-            f.write(s)
-            f.close
-
-        html = html.replace(l, "." + cssPath)
-    
-        writehtml = html.encode('utf-8', 'ignore')
-        with open(link, 'wb') as f:
-                f.write(writehtml)
+            cssPath = "./static/stylesheets/" + cssFinal
+            open(cssPath, 'a').close
+            s = final.encode('utf-8', 'ignore')
+            with open(cssPath, 'wb') as f:
+                f.write(s)
                 f.close
 
+            html = html.replace(l, "." + cssPath)
+    except:
+        pass 
+    
     return html
 
 def inputJS(List, urlPath, html):
+    try:
+        for l in List:
+            
+            r = requests.get(l)
+            txt = r.text
 
-    for l in List:
-        r = requests.get(l)
-        txt = r.text
+            try:
+                final = JSBeautifier.beautify(txt, 4)
+            except:
+                final = txt
+        
+            try:
+                final = jsbeautifier.beautify(final)
+            except:
+                pass
 
-        try:
-            final = JSBeautifier.beautify(txt, 4)
-        except:
-            final = txt
+            pathAr = l.split("/")
+            jsName = pathAr[-1] 
 
-        pathAr = l.split("/")
-        jsName = pathAr[-1] 
-
-        sep = '.js'
-        if ".js" not in jsName:
-            jsFinal = jsName + ".js"
-        else: 
-            temp = jsName.split(sep, 1)[0]
-            jsFinal = temp + ".js"
+            sep = '.js'
+            if ".js" not in jsName:
+                jsFinal = jsName + ".js"
+            else: 
+                temp = jsName.split(sep, 1)[0]
+                jsFinal = temp + ".js"
     
-        jsPath = "./javascript/" + jsFinal
-        open(jsPath, 'a').close
-        s = final.encode('utf-8', 'ignore')
-        with open(jsPath, 'wb') as f:
-            f.write(s)
-            f.close
+            jsPath = "./javascript/" + jsFinal
+            open(jsPath, 'a').close
+            s = final.encode('utf-8', 'ignore')
+            with open(jsPath, 'wb') as f:
+                f.write(s)
+                f.close
 
-        html = html.replace(l, "." + jsPath)
-    
-        writehtml = html.encode('utf-8', 'ignore')
-        with open(link, 'wb') as f:
-            f.write(writehtml)
-            f.close
-
+            html = html.replace(l, "." + jsPath)
+    except: 
+        pass
+        
     return html
 
 def inputURL(html, List, url):
@@ -179,9 +180,9 @@ def inputURL(html, List, url):
             break
 
     for i in List:
-        html = html.replace(i, 'http://localhost:5055/get/'+i)
+        html = html.replace(i, 'http://localhost:5055/route/'+i)
     
-    html = recycle("get", html)
+    html = recycle("route", html)
     return html
 
 def deleteFiles(folderPath):
@@ -207,9 +208,14 @@ def writeHtml(nString, txt):
     jsList = links('script', "", "", 'src', soup)
     cssList = links('link', "rel", "stylesheet", 'href', soup)
 
-    html = inputURL(html, urlList, nString)
+    #html = inputURL(html, urlList, nString)
     inputHtml = inputJS(jsList, "js", html)
     finalHtml = inputCSS(cssList, "css", inputHtml)
+
+    try:
+        finalHtml = HTMLBeautifier.beautify(finalHtml, 4)
+    except:
+        pass
 
     s = finalHtml.encode('utf-8', 'ignore')
     with open(link, 'wb') as f:
