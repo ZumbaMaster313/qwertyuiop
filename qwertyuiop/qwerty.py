@@ -126,7 +126,7 @@ def inputCSS(List, urlPath, html):
                 f.write(s)
                 f.close
 
-            html = html.replace(l, "." + cssPath
+            html = html.replace(l, "." + cssPath)
     except:
         pass 
     
