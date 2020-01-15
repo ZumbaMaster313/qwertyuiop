@@ -27,7 +27,7 @@ def home():
     return render_template("index.html"), 200
 
 @webserver.route('/get', methods=['POST'])
-def go(path):
+def go():
 
     myString = request.form['ecid']
 
@@ -50,8 +50,9 @@ def go(path):
         
         return render_template("result.html"), 200
 
-    except Exception:
-        return render_template("error.html", error="Hey mate, your supposed to input a url...", help="* https://idiot.com *"), 200
+    except Exception as e:
+        return e
+        #return render_template("error.html", error="Hey mate, your supposed to input a url...", help="* https://idiot.com *"), 200
 
 @webserver.route('/route', defaults={'path': ''})
 @webserver.route('/route/<path:path>')
@@ -99,8 +100,10 @@ def recycle(path, finalHtml):
     return finalHtml
 
 def inputCSS(List, urlPath, html):
+    html = delNameTags(html, 'link', "rel", "stylesheet")
     try:
         for l in List:
+
             r = requests.get(l)
             txt = r.text
 
@@ -131,11 +134,12 @@ def inputCSS(List, urlPath, html):
         pass 
     
     return html
+    
 
 def inputJS(List, urlPath, html):
+    html = delNameTags(html, 'script', "", "")
     try:
         for l in List:
-            
             r = requests.get(l)
             txt = r.text
 
@@ -159,7 +163,7 @@ def inputJS(List, urlPath, html):
                 temp = jsName.split(sep, 1)[0]
                 jsFinal = temp + ".js"
     
-            jsPath = "./javascript/" + jsFinal
+            jsPath = "./static/javascript/" + jsFinal
             open(jsPath, 'a').close
             s = final.encode('utf-8', 'ignore')
             with open(jsPath, 'wb') as f:
@@ -170,6 +174,16 @@ def inputJS(List, urlPath, html):
     except: 
         pass
         
+    return html
+
+def delNameTags(html, tag, contentName, arg):
+    soup = bs(html, 'html.parser')
+    for link in soup.findAll(tag, {contentName : arg}):
+        try:
+            link['name'] = ""
+        except:
+            pass
+    html = str(soup)
     return html
 
 def inputURL(html, List, url):
@@ -196,7 +210,7 @@ def deleteFiles(folderPath):
 def writeHtml(nString, txt):
     
     deleteFiles('./static/stylesheets/')
-    deleteFiles('./javascript')
+    deleteFiles('./static/javascript')
 
     txt = txt.replace('"//', '"https://')
     txt = txt.replace("'/", "'"+nString+'/')
@@ -208,7 +222,7 @@ def writeHtml(nString, txt):
     jsList = links('script', "", "", 'src', soup)
     cssList = links('link', "rel", "stylesheet", 'href', soup)
 
-    #html = inputURL(html, urlList, nString)
+    html = inputURL(html, urlList, nString)
     inputHtml = inputJS(jsList, "js", html)
     finalHtml = inputCSS(cssList, "css", inputHtml)
 
