@@ -1,0 +1,115 @@
+@import url('https://fonts.googleapis.com/css?family=Rubik:500,700');
+@import url('https://fonts.googleapis.com/css?family=Roboto+Mono:400,500,700');
+
+/* Override highlight color */
+::selection {background: #FFB800;}
+::-moz-selection {background: #FFB800;}
+
+/* Disable input field highlight borders */
+textarea:focus, input:focus {outline: none;}
+
+body, html {
+    background-color: #242424;
+    display: grid;
+    height: 99%;
+    overflow: hidden;
+}
+#container {
+    margin: auto;
+    padding-bottom: 150px;
+}
+#header {
+    font-family: 'Roboto Mono', monospace;
+    font-weight: 700;
+    color: #F1F1F1;
+    font-size: 96px;
+    text-align: center;
+    padding-bottom: 30px;
+    margin: 0px;
+    animation: zoom 1s;
+    user-select: none;
+}
+
+#bad {
+    font-family: 'Roboto Mono', monospace;
+    font-weight: none;
+    color: #F1F1F1;
+    font-size: 40px;
+    text-align: center;
+    padding-bottom: 30px;
+    margin: 0px;
+    animation: zoom 1s;
+    user-select: none;
+}
+#headline {
+    font-family: 'Roboto Mono', monospace;
+    font-weight: 500;
+    color: #9D9D9D;
+    font-size: 24px;
+    text-align: center;
+    padding:30px 0px 0px 0px;
+    margin: 0px 0px 50px 0px;
+    animation: fade_in 1s ease-in forwards;
+    animation-delay: 0.5s;
+    visibility: hidden;
+    user-select: none;
+}
+#r {
+    display: inline-block;
+    width: 400px;
+    padding: 15px;
+    background-color: #303030;
+    -webkit-appearance: none;
+    border: none;
+    font-size: 20px;
+    font-family: "Roboto Mono", monospace;
+    font-weight: 500;
+    color: #c0c0c0;
+    margin: 0 auto;
+    box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 11px;
+    animation: fade_up 2s ease-in forwards;
+    animation-delay: 0.3s;
+    caret-color: #535353;
+    visibility: hidden;
+}
+#r::placeholder {
+    color: #777777;
+}
+#form {
+    position: relative;
+}
+
+/* Animations */
+@keyframes fade_up {
+    0% { 
+        transform: translateY(7px);
+        opacity: 0.0;
+        visibility: visible;
+    } 
+    100% {
+        transform: translateY(0px);
+        opacity: 1.0;
+        visibility: visible;
+    }
+}
+@keyframes fade_in {
+    0% { 
+        opacity: 0.0;
+        visibility: visible;
+    } 
+    100% {
+        opacity: 1.0;
+        visibility: visible;
+    }
+}
+@keyframes zoom {
+    0% { 
+        transform: scale(0.98);
+        opacity: 0.0;
+    } 
+    100% {
+        transform: scale(1.0);
+        opacity: 1.0;
+    }
+}
