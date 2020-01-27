@@ -3,7 +3,6 @@ from html5print import CSSBeautifier, HTMLBeautifier, JSBeautifier
 from bs4 import BeautifulSoup as bs
 from requests import get
 import requests
-import errno
 import jsbeautifier
 import os 
 import webbrowser
