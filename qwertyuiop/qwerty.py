@@ -1,8 +1,11 @@
+#!/usr/bin/python3.6
+
 from flask import Flask, render_template, request, jsonify
 from html5print import CSSBeautifier, HTMLBeautifier, JSBeautifier
 from bs4 import BeautifulSoup as bs
 from requests import get
 import requests
+import errno
 import jsbeautifier
 import os 
 import webbrowser
@@ -19,12 +22,14 @@ myString = ""
 newString = ""
 link = "./templates/result.html"
 test = "./templates/test.html"
-domain = "http://localhost:5055/"
+domain = "https://qwertyuiop.space/"
 
+#Returns homepage
 @webserver.route("/")
 def home():
     return render_template("index.html"), 200
 
+#After link is entered, this function requests the html
 @webserver.route('/get', methods=['POST'])
 def go():
 
@@ -49,10 +54,10 @@ def go():
         
         return render_template("result.html"), 200
 
-    except Exception as e:
-        return e
-        #return render_template("error.html", error="Hey mate, your supposed to input a url...", help="* https://idiot.com *"), 200
+    except Exception:
+        return render_template("error.html", error="Hey mate, your supposed to input a url...", help="* https://idiot.com *"), 200
 
+#Requests new html from links within parent html
 @webserver.route('/route', defaults={'path': ''})
 @webserver.route('/route/<path:path>')
 def proxy(path):
@@ -72,6 +77,7 @@ def proxy(path):
     except Exception:
         return render_template("error.html", error="Sorry, but uhh this server cannot render that...", help="* :( *"), 200
 
+#Gets either js, css, or routing links
 def links(method, mType, arg, location, soup):
     List = []
     link = soup.find_all(method, {mType : arg})
@@ -98,6 +104,7 @@ def recycle(path, finalHtml):
     finalHtml = finalHtml.replace(parentString + childString, parentString)
     return finalHtml
 
+#Requests css links and inputs it into local files for the HTML to render
 def inputCSS(List, urlPath, html):
     html = delNameTags(html, 'link', "rel", "stylesheet")
     try:
@@ -123,7 +130,10 @@ def inputCSS(List, urlPath, html):
     
             cssPath = "./static/stylesheets/" + cssFinal
             open(cssPath, 'a').close
-            s = final.encode('utf-8', 'ignore')
+            try:
+                s = final.encode('utf-8', 'ignore')
+            except:
+                s = final
             with open(cssPath, 'wb') as f:
                 f.write(s)
                 f.close
@@ -134,7 +144,7 @@ def inputCSS(List, urlPath, html):
     
     return html
     
-
+#Requests js links and inputs it into local files for the HTML to render
 def inputJS(List, urlPath, html):
     html = delNameTags(html, 'script', "", "")
     try:
@@ -164,7 +174,10 @@ def inputJS(List, urlPath, html):
     
             jsPath = "./static/javascript/" + jsFinal
             open(jsPath, 'a').close
-            s = final.encode('utf-8', 'ignore')
+            try:
+                s = final.encode('utf-8', 'ignore')
+            except:
+                s = final
             with open(jsPath, 'wb') as f:
                 f.write(s)
                 f.close
@@ -184,7 +197,7 @@ def delNameTags(html, tag, contentName, arg):
             pass
     html = str(soup)
     return html
-
+#Puts the servers domain name in front of the reqested website's URL
 def inputURL(html, List, url):
     while True:
         try:
@@ -193,11 +206,11 @@ def inputURL(html, List, url):
             break
 
     for i in List:
-        html = html.replace(i, 'http://localhost:5055/route/'+i)
+        html = html.replace(i, domain+'route/'+i)
     
     html = recycle("route", html)
     return html
-
+#After every request, the server deletes the js and css folders from the last website
 def deleteFiles(folderPath):
     for f in os.listdir(folderPath):
         filePath = os.path.join(folderPath, f)
@@ -205,7 +218,8 @@ def deleteFiles(folderPath):
             os.remove(filePath)
         except:
             pass
-            
+
+#This method is just a slave and calls all other methods ⚙️
 def writeHtml(nString, txt):
     
     deleteFiles('./static/stylesheets/')
@@ -236,4 +250,4 @@ def writeHtml(nString, txt):
         f.close
 
 if (__name__ == "__main__"):
-    webserver.run(debug=True, port=5055, host='0.0.0.0')
+    webserver.run(debug=True, host='0.0.0.0')
